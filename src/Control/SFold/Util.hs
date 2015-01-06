@@ -7,6 +7,7 @@ import qualified Data.Foldable as F
 import qualified Data.Map as Map
 import           Data.Monoid
 import           Pipes
+import Control.Monad
 
 sfoldGet :: Monad m => (a -> x) -> (x -> x -> x) -> x -> (x -> (x,[b])) -> (x -> x) -> Producer a m () -> Producer [b] m ()
 sfoldGet to step begin release flush p0 = loop p0 begin
@@ -26,6 +27,17 @@ sfold :: Monad m => SFold a b -> Producer a m () -> Producer [b] m ()
 sfold (SFold to step begin release flush) =
     sfoldGet to step begin release flush
 
+sfold' :: Monad m => SFold a b -> Producer a m () -> Producer b m ()
+sfold' (SFold to step begin release flush) p =
+    sfoldGet to step begin release flush p >-> flatten
+  where
+    flatten = forever $ do
+        a <- await
+        mapM_ yield a
+
+(>?>) :: (Monad m) => Producer a m () -> SFold a b -> Producer b m ()
+(>?>) p s = sfold' s p
+
 -- pipes
 sscan :: (Monad m) => SFold a b -> Pipe a b m r
 sscan (SFold to step begin release _) = loop begin
@@ -37,11 +49,11 @@ sscan (SFold to step begin release _) = loop begin
     loop st'
 
 toFoldl :: SFold a b -> L.Fold a [b]
-toFoldl (SFold to step begin release finalize) =
+toFoldl (SFold to step begin release flush) =
   L.Fold step' begin done
   where
     step' x a = step x (to a)
-    done = snd . release . finalize
+    done = snd . release . flush
 
 orMaybe :: (a -> b) -> (a -> a -> b) -> Maybe a -> Maybe a -> Maybe b
 orMaybe unif binf x x' =
@@ -52,6 +64,16 @@ orMaybe unif binf x x' =
     Just v -> case x' of
       Nothing -> Just $ unif v
       Just v' -> Just (binf v v')
+
+orMaybe' :: (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
+orMaybe' ma x x' =
+  case x of
+    Nothing -> case x' of
+      Nothing -> Nothing
+      Just v' -> Just v'
+    Just v -> case x' of
+      Nothing -> Just v
+      Just v' -> Just (ma v v')
 
 keyFold :: (Ord c) => SFold a b -> SFold (c, a) (c, b)
 keyFold (SFold toX ma _ rel flush) = SFold to' ma' mempty rel' flush'
