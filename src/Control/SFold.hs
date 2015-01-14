@@ -37,7 +37,7 @@ instance Category SFold where
 
     (SFold to1 step1 begin1 release1 flush1) . (SFold to0 step0 begin0 release0 flush0) = SFold to step begin release flush
       where
-        flushr = foldr (step1 . to1) begin1
+        flushr = foldr (step1 . to1) begin1 -- should be mempty
         to = second flushr . release0 . to0
         step (x0,x1) (x0',x1') = (step0 x0 x0',step1 x1 x1')
         begin = (begin0,begin1)
