@@ -1,4 +1,4 @@
-module Control.SFold.Example where
+module ExampleTimeFold where
 
 import Prelude hiding ((.))
 import Control.Category ((.))

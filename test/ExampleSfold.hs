@@ -1,4 +1,4 @@
-module Main where
+module ExampleSfold where
 
 import Control.Category ((.))
 import Prelude hiding ((.))

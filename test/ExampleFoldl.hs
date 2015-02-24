@@ -1,4 +1,4 @@
-module Main where
+module ExampleFoldl where
 
 import qualified Control.Foldl as Foldl
 import qualified Pipes.Prelude as Pipes

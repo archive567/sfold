@@ -1,4 +1,4 @@
-module Main where
+module ExampleDeconstruct where
 
 import Prelude hiding ((.))
 import qualified Pipes.Prelude as Pipes

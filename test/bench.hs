@@ -4,7 +4,6 @@
 
 module Main where
 
--- import Control.Category hiding ((.))
 import           Control.Applicative
 import           Control.DeepSeq
 import qualified Control.Foldl as Foldl
@@ -24,30 +23,29 @@ import           Pipes
 import           Pipes.Lift
 import qualified Pipes.Prelude as Pipes
 import           System.Environment
-import Data.Monoid
 
--- a concrete (explicit state) reducer to kick things off
--- x -> a -> (b,x) (adopting the unfoldMealy order)
-myStep :: (Ord t, Num t) => t -> t -> t -> ([t],t)
-myStep trigger acc a =
-  let acc' = acc + a in
-  if acc' >= trigger
-  then ([acc'],0)
-  else ([],acc')
+-- an (explicit state) left step to kick things off
+type Step x a b = x -> a -> (b,x)
 
+myStep :: Step Int Int [Int]
+myStep x a =
+  let x' = x + a in
+  if x' >= 10
+     then ([x'],0)
+     else ([],x')
 
 -- machines
-myMealy :: (Ord a, Num a) =>  a -> Mealy a [a]
-myMealy trigger = unfoldMealy (myStep trigger) 0
+myMealy :: Mealy Int [Int]
+myMealy = unfoldMealy myStep 0
 
-mealy' :: (Ord a, Num a) => [a] -> [[a]]
-mealy' ns = runIdentity $ M.runT $ M.supply ns (M.auto $ myMealy 10)
+mealy' :: [Int] -> [[Int]]
+mealy' ns = runIdentity $ M.runT $ M.supply ns (M.auto myMealy)
 
 -- pipes
 data Mealy' a b = forall x . Mealy' x (x -> a -> (b,x))
 
-myMealy' :: (Ord a, Num a) => a -> Mealy' a [a]
-myMealy' trigger = Mealy' 0 (myStep trigger)
+myMealy' :: Mealy' Int [Int]
+myMealy' = Mealy' 0 myStep
 
 toPipe :: (Monad m, Ord a, Num a) => Mealy' a [a] -> Pipe a [a] m ()
 toPipe (Mealy' begin step) =
@@ -59,8 +57,8 @@ toPipe (Mealy' begin step) =
       yield b
       go x'
 
-pipe :: (Ord a, Num a, Foldable f) => f a -> [[a]]
-pipe ns = Pipes.toList (each ns >-> toPipe (myMealy' 10)) 
+pipe :: [Int] -> [[Int]]
+pipe ns = Pipes.toList (each ns >-> toPipe myMealy') 
 
 -- pipes using state (lifting state)
 toPipe' :: (Monad m, Ord a, Num a) => Mealy' a [a] -> Pipe a [a] m ()
@@ -72,8 +70,8 @@ toPipe' (Mealy' begin step) =
     yield b
     lift $ put x'
 
-pipe' :: (Ord a, Num a, Foldable f) => f a -> [[a]]
-pipe' ns = Pipes.toList (each ns >-> toPipe' (myMealy' 10)) 
+pipe' :: [Int] -> [[Int]]
+pipe' ns = Pipes.toList (each ns >-> toPipe' myMealy') 
 
 -- pipes using state (lifting pipes)
 toPipe'' :: (Monad m, Ord a, Num a) => Mealy' a [a] -> Pipe a [a] m ()
@@ -85,8 +83,8 @@ toPipe'' (Mealy' begin step) =
     lift $ yield b
     put x'
 
-pipe'' :: (Ord a, Num a, Foldable f) => f a -> [[a]]
-pipe'' ns = Pipes.toList (each ns >-> toPipe'' (myMealy' 10)) 
+pipe'' :: [Int] -> [[Int]]
+pipe'' ns = Pipes.toList (each ns >-> toPipe'' myMealy') 
 
 -- just a Foldl.fold
 toFoldl :: Mealy' a b -> Foldl.Fold a [b]
@@ -96,14 +94,14 @@ toFoldl (Mealy' begin step) = Foldl.Fold step' begin' done'
     step' (output,acc) a = (\(b,acc') -> (b:output,acc')) $ step acc a
     done' = reverse . fst
 
-foldl' :: (Foldable f) => f Integer -> [[Integer]]
-foldl' = Foldl.fold (toFoldl (myMealy' 10))
+foldl' :: [Int] -> [[Int]]
+foldl' = Foldl.fold (toFoldl myMealy')
 
 -- escaping skolems
 data Mealy'' a b x = Mealy'' x (a -> x -> (x,b))
 
-myMealy'' :: (Ord a, Num a) => a -> Mealy'' a [a] a
-myMealy'' trigger = Mealy'' 0 (\a x -> swap (myStep trigger a x))
+myMealy'' :: Mealy'' Int [Int] Int
+myMealy'' = Mealy'' 0 (\a x -> swap (myStep a x))
 
 toPipeWithSkolem :: (Monad m, Ord a, Num a) => Mealy'' a [a] a-> Pipe a [a] m ()
 toPipeWithSkolem (Mealy'' begin step) =
@@ -115,21 +113,20 @@ toPipeWithSkolem (Mealy'' begin step) =
       yield b
       go x'
 
-skolem :: (Ord a, Num a, Foldable f) => f a -> [[a]]
-skolem ns = Pipes.toList (each ns >-> toPipeWithSkolem (myMealy'' 10)) 
+skolem :: [Int] -> [[Int]]
+skolem ns = Pipes.toList (each ns >-> toPipeWithSkolem myMealy'')
 
--- fold
-
+-- foldl'
 -- myStep without an output tape
-myStep' :: (Ord t, Num t) => t -> ([[t]],t) -> t -> ([[t]],t)
-myStep' trigger (out,acc) a =
+myStep' :: ([[Int]],Int) -> Int -> ([[Int]],Int) 
+myStep' (out,acc) a =
   let acc' = acc + a in
-  if acc' >= trigger
+  if acc' >= 10
   then ([acc']:out,0)
   else ([]:out,acc')
 
-fold :: (Num a, Ord a, Foldable f) => f a -> [[a]]
-fold ns = fst $ F.foldl' (myStep' 10) ([],0) ns
+fold :: [Int] -> [[Int]]
+fold ns = fst $ F.foldl' myStep' ([],0) ns
 
 --criterion helpers
 data Speed =
@@ -156,9 +153,11 @@ render' label n speed =
 -- speed test
 main :: IO ()
 main = do
-  (ns':n':_) <- getArgs
-  let ns = read ns'
-      n = read n'
+  args <- getArgs
+  let (ns,n) = case args of
+        [] -> (1000,10)
+        [ns'] -> (read ns',10)
+        (ns':n':_) -> (read ns', read n')
       t = ns*n
       str = replicate n 1
   Text.putStrLn "func\t\t\tn\tmutat\tgc\tspeed"
@@ -181,11 +180,11 @@ producerToSource p =
       a <- await
       lift $ M.yield a)
 
-source :: (Monad m) => M.MachineT m k Integer
+source :: (Monad m) => M.MachineT m k Int
 source = M.construct (producerToSource (each [1..100])) 
 
-summary :: (Monad m) => M.MachineT m k [Integer]
-summary = M.cap (M.auto $ myMealy 10) source
+summary :: (Monad m) => M.MachineT m k [Int]
+summary = M.cap (M.auto myMealy) source
 
 -- waits until machine runs completely
 badPrint :: Int -> IO ()
@@ -208,13 +207,13 @@ t1 = void $ runEffect $ void (M.runT (summary M.~> prodTee)) >-> Pipes.take 10 >
 printMachine :: (Show a) => M.MachineT IO (M.Is [a]) ()
 printMachine = M.repeatedly $ M.await >>= lift . print >> M.yield ()
 
-machinePrint :: (Num a, Ord a, Show a) => [a] -> IO ()
-machinePrint ns = M.runT_ $ M.supply ns (M.auto $ myMealy 10) M.~> printMachine
+machinePrint :: [Int] -> IO ()
+machinePrint ns = M.runT_ $ M.supply ns (M.auto myMealy) M.~> printMachine
 
 printPipe :: (Show a) => Consumer a IO ()
 printPipe = forever $ await >>= lift . print
 
-pipesPrint :: (Ord a, Num a, Show a, Foldable f) => f a -> IO ()
-pipesPrint ns = runEffect $ each ns >-> toPipe (myMealy' 10) >-> printPipe 
+pipesPrint :: [Int] -> IO ()
+pipesPrint ns = runEffect $ each ns >-> toPipe myMealy' >-> printPipe 
 
 
