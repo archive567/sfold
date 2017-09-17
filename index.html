@@ -1,0 +1,21 @@
+<meta charset="utf-8"> <link rel="stylesheet" href="https://tonyday567.github.io/other/lhs.css"> <link href="https://fonts.googleapis.com/css?family=Inconsolata|Lora|Raleway" rel="stylesheet">
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<h1 id="sfold"><a href="https://github.com/tonyday567/sfold">sfold</a></h1>
+<p><a href="https://travis-ci.org/tonyday567/sfold"><img src="https://travis-ci.org/tonyday567/sfold.svg" alt="Build Status" /></a> <a href="https://hackage.haskell.org/package/sfold"><img src="https://img.shields.io/hackage/v/sfold.svg" alt="Hackage" /></a> <a href="http://stackage.org/lts/package/sfold"><img src="https://www.stackage.org/package/sfold/badge/lts" alt="lts" /></a> <a href="http://stackage.org/nightly/package/sfold"><img src="https://www.stackage.org/package/sfold/badge/nightly" alt="nightly" /></a></p>
+<p><code>sfold</code> is a composable stream library</p>
+<h2 id="results">results</h2>
+<pre><code>machines                 3.01e6  1.04e7  2.32e5  3.00e5  2.59e5 1.81e5 cycles
+pipe                     3.61e5  1.39e5  2.05e5  1.70e5  1.82e5 1.66e5 cycles
+pipe - state             2.48e7  2.10e7  2.19e7  2.24e7  1.92e7 1.78e7 cycles
+pipe - bad state         4.34e6  3.63e6  3.55e6  3.73e6  4.08e6 3.85e6 cycles
+foldl                    4.22e6  9.09e4  9.15e4  2.33e5  1.29e5 5.29e4 cycles
+pipe &amp; skolems           2.95e5  3.41e5  2.62e5  2.97e5  3.22e5 1.69e5 cycles
+just a fold              4.28e4  3.39e4  3.42e4  3.46e4  3.42e4 3.14e4 cycles</code></pre>
+<h1 id="workflow">workflow</h1>
+<pre><code>stack build --test --exec &quot;$(stack path --local-install-root)/bin/sfold-bench&quot; --exec &quot;$(stack path --local-bin)/pandoc -f markdown -i other/header.md bench/bench.md other/footer.md -t html -o index.html --filter pandoc-include --mathjax&quot; --exec &quot;$(stack path --local-bin)/pandoc -f markdown -i bench/bench.md -t markdown -o readme.md --filter pandoc-include --mathjax&quot; --file-watch</code></pre>
+<hr />
+<div class="footer">
+<p>Made with love 'n' care; and <a href="https://haskell-lang.org/">haskell</a>, <a href="https://pandoc.org">pandoc</a>, and <a href="https://docs.haskellstack.org/en/stable/README/">stack</a>.</p>
+</div>

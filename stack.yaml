@@ -1,0 +1,9 @@
+resolver: lts-9.4
+
+packages:
+  - .
+
+extra-deps:
+  - perf-0.3.0
+  - numhask-0.1.2
+
