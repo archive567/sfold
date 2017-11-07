@@ -7,6 +7,7 @@ import Control.Arrow (second)
 import Control.Category (Category(..))
 import Data.Monoid (Monoid(..), (<>))
 import Prelude hiding ((.), id)
+import Data.Profunctor
 
 {-| SFold stands for Stream Fold and is a representation of a fold of a Stream where:
 
@@ -16,24 +17,22 @@ import Prelude hiding ((.), id)
     This busts the usual step function for folds (x -> a -> x) into two (step x a ~ step x (to a).
 
     begin: x is the initial accumulator.
-    release: (x -> (x,[b]) takes the accumulator and computes a new accumulator (a remainder say, and an accumulated result of the fold so far (a release).
+
+    release: (x -> (x,[b]) takes the accumulator and computes a new accumulator (a remainder say), and an accumulated result of the fold so far (a release).
 
     flush: (x -> x) prepare the accumulator for final release (eg on finalization of the stream)
 -}
-data SFold a b =
-  forall x. SFold (a -> x)
-                  (x -> x -> x)
-                  x
-                  (x -> (x, [b]))
-                  (x -> x)
+data SFold a b = forall x. SFold (a -> x) (x -> x -> x) x (x -> (x, [b])) (x -> x)
 
-data Pair a b =
-  Pair !a
-       !b
+data Pair a b = Pair !a !b
 
 instance Functor (SFold a) where
   fmap f (SFold to step begin release flush) =
     SFold to step begin (second (fmap f) . release) flush
+
+instance Profunctor SFold where
+    lmap f (SFold to step begin release flush) = SFold (to . f) step begin release flush
+    rmap = fmap
 
 instance Category SFold where
   id = SFold (: []) (<>) [] (\x -> ([], x)) id
@@ -69,3 +68,31 @@ instance Monoid b => Monoid (SFold a b) where
             (xR', bsR) = releaseR xR
         in (Pair xL' xR', bsL <> bsR)
       flush (Pair xL xR) = Pair (flushL xL) (flushR xR)
+
+instance Applicative (SFold a) where
+    pure b = SFold (const ()) (\() _ -> ()) () (\() -> ((), [b])) (const ())
+    (SFold toF stepF beginF releaseF flushF) <*> (SFold toA stepA beginA releaseA flushA) =
+        SFold to step begin release flush
+      where
+        to a = Pair (toF a) (toA a)
+        step (Pair xF xA) (Pair aF aA) = Pair (stepF xF aF)(stepA xA aA)
+        begin = Pair beginF beginA
+        release (Pair xF xA) =
+            let (xA', outA) = releaseA xA
+                (xF', outF) = releaseF xF
+            in ((Pair xF' xA'), outF <*> outA)
+        flush (Pair xF xA) = Pair (flushF xF) (flushA xA)
+
+-- pure id <*> (SFold toA stepA beginA releaseA flushA)
+-- (SFold (const ()) (\() _ -> ()) () (\() -> ((), [id])) (const ())) <*> (SFold toA stepA beginA releaseA flushA)
+-- SFold (\x -> Pair () (toA x)) (\(Pair () xA) (Pair () aA) -> Pair () (stepA xA aA)) (Pair () beginA) (\(Pair () xA) -> ((Pair () (fst $ releaseA xA)), [id] <*> (snd $ releaseA xA))) (\(Pair () xA) -> Pair () flushA xA)
+-- x is isomorphic to (Pair () x)
+-- SFold (\x -> toA x) (\xA aA -> stepA xA aA) beginA (\xA -> (fst $ releaseA xA, [id] <*> (snd $ releaseA xA))) (\xA -> flushA xA)
+-- lambda removal
+-- SFold toA stepA beginA (\xA -> (fst $ releaseA xA, [id] <*> (snd $ releaseA xA))) flushA
+-- [id] <*> is id
+--  SFold toA stepA beginA (\xA -> (fst $ releaseA xA, (snd $ releaseA xA))) flushA
+-- \x -> (fst $ f x, snd $ f x) is f
+--  SFold toA stepA beginA releaseA flushA
+--
+
