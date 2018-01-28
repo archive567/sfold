@@ -32,8 +32,8 @@ sfoldGet to step begin release flush p0 = loop p0 begin
           yield bs
           loop p' x'
 
-sfold :: Monad m => SFold a b -> Producer a m () -> Producer [b] m ()
-sfold (SFold to step begin release flush) = sfoldGet to step begin release flush
+-- sfold :: Monad m => SFold a b -> Producer a m () -> Producer [b] m ()
+-- sfold (SFold to step begin release flush) = sfoldGet to step begin release flush
 
 sfold' :: Monad m => SFold a b -> Producer a m () -> Producer b m ()
 sfold' (SFold to step begin release flush) p =

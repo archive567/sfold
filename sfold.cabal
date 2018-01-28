@@ -34,7 +34,7 @@ library
     SFold.Util,
     SFold.SBar,
     SFold.SMealy
-    SFold.Examples  
+    -- SFold.Examples  
   other-modules:
   build-depends:
     base >= 4.7 && < 4.11,
@@ -87,7 +87,8 @@ executable sfold-bench
     protolude,
     sfold,
     text,
-    transformers
+    transformers,
+    scientific
   default-extensions:
     DeriveGeneric,
     DeriveTraversable,

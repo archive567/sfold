@@ -8,6 +8,8 @@ import Control.Category (Category(..))
 import Data.Monoid (Monoid(..), (<>))
 import Prelude hiding ((.), id)
 import Data.Profunctor
+import qualified Control.Foldl as L
+import Data.Foldable (fold)
 
 {-| SFold stands for Stream Fold and is a representation of a fold of a Stream where:
 
@@ -35,11 +37,11 @@ instance Profunctor SFold where
     rmap = fmap
 
 instance Category SFold where
-  id = SFold (: []) (<>) [] (\x -> ([], x)) id
+  id = SFold (:[]) (<>) [] (\x -> (x, [])) id
   (SFold to1 step1 begin1 release1 flush1) . (SFold to0 step0 begin0 release0 flush0) =
     SFold to step begin release flush
     where
-      flushr = foldr (step1 . to1) begin1 -- should be mempty
+      flushr = foldr (step1 . to1) begin1
       to = second flushr . release0 . to0
       step (x0, x1) (x0', x1') = (step0 x0 x0', step1 x1 x1')
       begin = (begin0, begin1)
@@ -80,7 +82,7 @@ instance Applicative (SFold a) where
         release (Pair xF xA) =
             let (xA', outA) = releaseA xA
                 (xF', outF) = releaseF xF
-            in ((Pair xF' xA'), outF <*> outA)
+            in (Pair xF' xA', outF <*> outA)
         flush (Pair xF xA) = Pair (flushF xF) (flushA xA)
 
 -- pure id <*> (SFold toA stepA beginA releaseA flushA)
@@ -96,3 +98,11 @@ instance Applicative (SFold a) where
 --  SFold toA stepA beginA releaseA flushA
 --
 
+toFoldl :: SFold a b -> L.Fold a [b]
+toFoldl (SFold to step begin release flush) = L.Fold step' begin done
+  where
+    step' x a = step x (to a)
+    done = snd . release . flush
+
+sfold :: (Foldable f) => SFold a b -> f a -> [b]
+sfold = L.fold . toFoldl

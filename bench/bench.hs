@@ -28,6 +28,7 @@ import Pipes.Lift
 import qualified Pipes.Prelude as Pipes
 import Protolude hiding ((%), evalStateT, expt, get, put)
 import System.Environment
+import Data.Scientific
 
 data Opts = Opts
   { runs :: Maybe Int -- <?> "number of runs"
@@ -38,6 +39,9 @@ data Opts = Opts
 instance ParseField [Int]
 
 instance ParseRecord Opts
+
+expt' :: Int -> Format r (Scientific -> r)
+expt' x = scifmt Exponent (Just x)
 
 -- an (explicit state) left step to kick things off
 type Step x a b = x -> a -> (b, x)
@@ -158,10 +162,10 @@ data Speed = Speed
 formatRun :: [Cycle] -> Text -> Text
 formatRun cs label =
   sformat
-    ((right 24 ' ' %. stext) % stext % (left 7 ' ' %. prec 3) % " cycles")
+    ((right 24 ' ' %. stext) % stext % (left 7 ' ' %. expt' 3) % " cycles")
     label
-    (Text.intercalate " " $ sformat (left 7 ' ' %. prec 3) <$> take 5 cs)
-    (percentile 0.4 cs)
+    (Text.intercalate " " $ sformat (left 7 ' ' %. expt' 3) <$> (\x -> scientific (fromIntegral x) 0) <$> take 5 cs)
+    (fromFloatDigits $ percentile 0.4 cs)
 
 formatRunHeader =
   sformat
@@ -194,13 +198,13 @@ speed' nSamples f a = do
 render' :: Text -> Int -> Speed -> Text
 render' label n speed =
   sformat
-    (stext % "\t" % expt 2 % "\t" % expt 2 % "\t" % expt 2 % "\t" % expt 2 %
+    (stext % "\t" % expt' 2 % "\t" % expt' 2 % "\t" % expt' 2 % "\t" % expt' 2 %
      "\n")
     label
-    n
-    (_speedMutator speed)
-    (_speedGc speed)
-    ((_speedGc speed + _speedMutator speed) / fromIntegral n)
+    ((\x -> scientific (fromIntegral x) 0) n)
+    (fromFloatDigits $ _speedMutator speed)
+    (fromFloatDigits $ _speedGc speed)
+    (fromFloatDigits $ (_speedGc speed + _speedMutator speed) / fromIntegral n)
 
 -- speed test
 main :: IO ()
