@@ -37,7 +37,7 @@ library
     -- SFold.Examples  
   other-modules:
   build-depends:
-    base >= 4.7 && < 4.11,
+    base >= 4.7 && < 4.12,
       containers, 
       foldl, 
       pipes,
@@ -86,6 +86,7 @@ executable sfold-bench
     pipes,
     protolude,
     sfold,
+    tdigest,
     text,
     transformers,
     scientific

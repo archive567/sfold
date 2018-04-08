@@ -57,6 +57,19 @@ instance Category SFold where
             x1'' = flush1 x1'
         in (x0'', x1'')
 
+instance Semigroup b => Semigroup (SFold a b) where
+  (<>) (SFold toL stepL beginL releaseL flushL) (SFold toR stepR beginR releaseR flushR) =
+    SFold to step begin release flush
+    where
+      to a = Pair (toL a) (toR a)
+      step (Pair xLL xRL) (Pair xLR xRR) = Pair (stepL xLL xLR) (stepR xRL xRR)
+      begin = Pair beginL beginR
+      release (Pair xL xR) =
+        let (xL', bsL) = releaseL xL
+            (xR', bsR) = releaseR xR
+        in (Pair xL' xR', bsL <> bsR)
+      flush (Pair xL xR) = Pair (flushL xL) (flushR xR)
+
 instance Monoid b => Monoid (SFold a b) where
   mempty = SFold (const ()) (\() _ -> ()) () (\() -> ((), [])) (const ())
   mappend (SFold toL stepL beginL releaseL flushL) (SFold toR stepR beginR releaseR flushR) =
