@@ -1,12 +1,16 @@
 resolver: nightly-2018-04-05
 
 packages:
-  - .
+  - sfold
+  - sfold-bench
+  - foldls
+  - words
 
 extra-deps:
   - perf-0.4.0.1
   - tdigest-0.1
-  # - perf-0.3.0
-  # - numhask-0.1.2
+  - streaming-bytestring-0.1.6
+  - streaming-utils-0.1.4.7
+  - json-stream-0.4.2.3
 
 allow-newer: true

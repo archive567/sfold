@@ -9,18 +9,18 @@ Status](https://travis-ci.org/tonyday567/sfold.svg)](https://travis-ci.org/tonyd
 
 `sfold` is a composable stream library
 
-results
--------
-
-    machines                7.869e5 1.182e6 1.315e5 1.305e5 5.262e61.292e5 cycles
-    pipe                    1.164e5 1.056e5 1.787e5 1.007e5 1.838e51.155e5 cycles
-    pipe - state            1.606e7 1.609e7 1.844e7 1.879e7 1.659e71.539e7 cycles
-    pipe - bad state        4.583e6 3.562e6 3.534e6 3.529e6 3.506e63.542e6 cycles
-    foldl                   5.137e4 3.854e4 4.033e4 4.024e4 3.997e43.650e4 cycles
-    pipe & skolems          1.564e5 1.041e5 1.979e5 9.788e4 8.823e59.727e4 cycles
-    just a fold             7.305e4 2.534e4 2.528e4 2.573e4 2.559e42.225e4 cycles
-
 workflow
 ========
 
-    stack build --test --exec "$(stack path --local-install-root)/bin/sfold-bench" --exec "$(stack path --local-bin)/pandoc -f markdown -i other/header.md bench/bench.md other/footer.md -t html -o index.html --filter pandoc-include --mathjax" --exec "$(stack path --local-bin)/pandoc -f markdown -i bench/bench.md -t markdown -o readme.md --filter pandoc-include --mathjax" --file-watch
+    stack build --test --exec "$(stack path --local-install-root)/bin/sfold-bench" --exec "$(stack path --local-bin)/pandoc -f markdown -i other/readme_.md -t markdown -o readme.md --filter pandoc-include --mathjax" --file-watch
+
+performance benchmarks
+======================
+
+    machines                8.975e5 1.356e6 1.614e5 1.683e5 4.022e61.291e5 cycles
+    pipe                    1.157e5 1.061e5 1.772e5 1.003e5 1.845e51.164e5 cycles
+    pipe - state            1.711e5 2.877e5 1.394e5 2.389e5 1.388e51.455e5 cycles
+    pipe - bad state        3.769e6 3.602e6 3.569e6 3.630e6 3.698e63.758e6 cycles
+    foldl                   5.393e4 4.166e4 4.191e4 4.179e4 1.278e54.141e4 cycles
+    pipe & skolems          1.046e5 2.057e5 9.190e4 2.095e5 9.180e49.205e4 cycles
+    just a fold             3.626e4 2.653e4 2.735e4 2.703e4 2.722e42.433e4 cycles

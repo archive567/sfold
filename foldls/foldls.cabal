@@ -1,0 +1,54 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: acbd69d73e7b693f8eef9fc91437dda05063f1b68fe7ad178edca16ba42056f0
+
+name:           foldls
+version:        0.0.1
+synopsis:       See readme.md
+description:    See readme.md for description.
+category:       project
+homepage:       https://github.com/tonyday567/sfold#readme
+bug-reports:    https://github.com/tonyday567/sfold/issues
+author:         Tony Day
+maintainer:     tonyday567@gmail.com
+copyright:      Tony Day (c) 2017
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/tonyday567/sfold
+
+library
+  hs-source-dirs:
+      src
+  default-extensions: BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals NoImplicitPrelude OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators UnicodeSyntax
+  ghc-options: -funbox-strict-fields -fforce-recomp
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , foldl
+    , protolude
+  exposed-modules:
+      Control.Foldl.Folds
+  other-modules:
+      Paths_foldls
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  hs-source-dirs:
+      test
+  default-extensions: BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals NoImplicitPrelude OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators UnicodeSyntax
+  build-depends:
+      base >=4.7 && <5
+    , doctest
+    , protolude
+  other-modules:
+      Paths_foldls
+  default-language: Haskell2010

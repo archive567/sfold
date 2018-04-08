@@ -22,19 +22,16 @@ build-type:
   Simple
 extra-source-files:
   stack.yaml
-  readme.md
 cabal-version:
   >=1.18
 homepage:
   https://github.com/tonyday567/sfold
-
 library
   exposed-modules:
     SFold,
     SFold.Util,
     SFold.SBar,
     SFold.SMealy
-    -- SFold.Examples  
   other-modules:
   build-depends:
     base >= 4.7 && < 4.12,
@@ -61,50 +58,6 @@ library
     RankNTypes,
     TypeFamilies,
     UnicodeSyntax
-
-executable sfold-bench
-  main-is:
-    bench.hs
-  default-language:
-    Haskell2010
-  ghc-options:
-    -O2
-    -threaded
-    -rtsopts
-  hs-source-dirs:
-    bench
-  build-depends:
-    base >= 4 && < 5,
-    criterion,
-    deepseq,
-    foldl,
-    formatting,
-    machines,
-    mtl,
-    optparse-generic,
-    perf,
-    pipes,
-    protolude,
-    sfold,
-    tdigest,
-    text,
-    transformers,
-    scientific
-  default-extensions:
-    DeriveGeneric,
-    DeriveTraversable,
-    FlexibleContexts,
-    FlexibleInstances,
-    InstanceSigs,
-    MultiParamTypeClasses,
-    NegativeLiterals,
-    NoImplicitPrelude,
-    OverloadedStrings,
-    PatternSynonyms,
-    RankNTypes,
-    TypeFamilies,
-    UnicodeSyntax
-
 source-repository head
   type:
     git

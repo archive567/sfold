@@ -227,6 +227,7 @@ render' label n speed =
 -- speed test
 main :: IO ()
 main = do
+  putStrLn ("bench fired up!" :: Text)
   o :: Opts <- getRecord "a random bit of text"
   let ns = fromMaybe 1000 (runs o)
   let n = fromMaybe 1000 (sumTo o)
@@ -239,7 +240,7 @@ main = do
   rfoldl <- run "foldl" $ ticks ns foldl'' [1 .. n]
   rskolem <- run "pipe & skolems" $ ticks ns skolem [1 .. n]
   rjustfold <- run "just a fold" $ ticks ns foldz [1 .. n]
-  writeFile "other/results.md" $
+  writeFile "other/bench.md" $
     code
       [rmachines, rpipe, rpipestate, rpipebadstate, rfoldl, rskolem, rjustfold]
 

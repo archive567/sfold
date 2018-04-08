@@ -1,3 +1,4 @@
 .stack_work/
 .stack-work
 .DS_Store
+*/.stack_work/
