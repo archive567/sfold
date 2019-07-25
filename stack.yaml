@@ -5,10 +5,6 @@ packages:
   - sfold-bench
   - foldls
   - words
-  - ../perf/perf
-  - ../perf/perf-analysis
-  - ../perf/perf-criterion
-  - ../readme-lhs
 
 extra-deps:
   # - perf-0.4.0.1
