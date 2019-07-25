@@ -1,4 +1,4 @@
-.stack_work/
-.stack-work
+/.stack-work/
 .DS_Store
-*/.stack_work/
+*/.stack-work/
+*/dist-newstyle/

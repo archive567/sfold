@@ -1,3 +1,4 @@
+``` {.haskell}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -27,10 +28,12 @@ import Perf
 import Pipes
 import Pipes.Lift
 import qualified Pipes.Prelude as Pipes
-import Protolude hiding ((%), evalStateT, expt, get, put)
+import Protolude hiding ((%), evalStateT, get, put)
 import System.Environment
 import Data.Scientific
 import Data.TDigest
+import Readme.Lhs hiding (Format, code)
+import Perf.Analysis
 
 data Opts = Opts
   { runs :: Maybe Int -- <?> "number of runs"
@@ -41,25 +44,6 @@ data Opts = Opts
 instance ParseField [Int]
 
 instance ParseRecord Opts
-
--- | compute deciles
---
--- > c5 <- decile 5 <$> ticks n f a
---
-deciles :: (Functor f, Foldable f) => Int -> f Cycle -> [Double]
-deciles n xs =
-  (\x -> fromMaybe 0 $ quantile x (tdigest (fromIntegral <$> xs) :: TDigest 25)) <$>
-  ((/ fromIntegral n) . fromIntegral <$> [0 .. n]) :: [Double]
-
--- | compute a percentile
---
--- > c <- percentile 0.4 . fst <$> ticks n f a
---
-percentile :: (Functor f, Foldable f) => Double -> f Cycle -> Double
-percentile p xs = fromMaybe 0 $ quantile p (tdigest (fromIntegral <$> xs) :: TDigest 25)
-
-expt' :: Int -> Format r (Scientific -> r)
-expt' x = scifmt Exponent (Just x)
 
 -- an (explicit state) left step to kick things off
 type Step x a b = x -> a -> (b, x)
@@ -171,79 +155,6 @@ myStep' (out, acc) a =
 foldz :: [Int] -> [[Int]]
 foldz ns = fst $ F.foldl' myStep' ([], 0) ns
 
---criterion helpers
-data Speed = Speed
-  { _speedMutator :: Double
-  , _speedGc :: Double
-  } deriving (Show)
-
-formatRun :: [Cycle] -> Text -> Text
-formatRun cs label =
-  sformat
-    ((right 24 ' ' %. stext) % stext % (left 7 ' ' %. expt' 3) % " cycles")
-    label
-    (Text.intercalate " " $ sformat (left 7 ' ' %. expt' 3) <$> (\x -> scientific (fromIntegral x) 0) <$> take 5 cs)
-    (fromFloatDigits $ percentile 0.4 cs)
-
-formatRunHeader =
-  sformat
-    ((right 24 ' ' %. stext) % (left 7 ' ' %. stext) % (left 8 ' ' %. stext) %
-     (left 8 ' ' %. stext) %
-     (left 8 ' ' %. stext) %
-     (left 8 ' ' %. stext) %
-     (left 8 ' ' %. stext))
-    "run"
-    "first"
-    "2nd"
-    "3rd"
-    "4th"
-    "5th"
-    "40th %"
-
-run label t = (`formatRun` label) . fst <$> t
-
-code :: [Text] -> Text
-code cs = "\n```\n" <> Text.intercalate "\n" cs <> "\n```\n"
-
-speed' ::
-     (Integral t)
-  => Control.DeepSeq.NFData b =>
-       t -> (a -> b) -> a -> IO Speed
-speed' nSamples f a = do
-  (m, _) <- Criterion.Measurement.measure (nf f a) (fromIntegral nSamples)
-  return $ (\x -> Speed (measMutatorCpuSeconds x) (measGcCpuSeconds x)) m
-
-render' :: Text -> Int -> Speed -> Text
-render' label n speed =
-  sformat
-    (stext % "\t" % expt' 2 % "\t" % expt' 2 % "\t" % expt' 2 % "\t" % expt' 2 %
-     "\n")
-    label
-    ((\x -> scientific (fromIntegral x) 0) n)
-    (fromFloatDigits $ _speedMutator speed)
-    (fromFloatDigits $ _speedGc speed)
-    (fromFloatDigits $ (_speedGc speed + _speedMutator speed) / fromIntegral n)
-
--- speed test
-main :: IO ()
-main = do
-  putStrLn ("bench fired up!" :: Text)
-  o :: Opts <- getRecord "a random bit of text"
-  let ns = fromMaybe 1000 (runs o)
-  let n = fromMaybe 1000 (sumTo o)
-  let t = ns * n
-  let str = replicate n 1
-  rmachines <- run "machines" $ ticks ns mealy' [1 .. n]
-  rpipe <- run "pipe" $ ticks ns pipe [1 .. n]
-  rpipestate <- run "pipe - state" $ ticks ns pipe'' [1 .. n]
-  rpipebadstate <- run "pipe - bad state" $ ticks ns pipe' [1 .. n]
-  rfoldl <- run "foldl" $ ticks ns foldl'' [1 .. n]
-  rskolem <- run "pipe & skolems" $ ticks ns skolem [1 .. n]
-  rjustfold <- run "just a fold" $ ticks ns foldz [1 .. n]
-  writeFile "other/bench.md" $
-    code
-      [rmachines, rpipe, rpipestate, rpipebadstate, rfoldl, rskolem, rjustfold]
-
 -- machines vs pipes
 producerToSource :: Monad m => Producer b m r -> M.PlanT k b m r
 producerToSource p =
@@ -292,3 +203,46 @@ printPipe = forever $ await >>= lift . print
 
 pipesPrint :: [Int] -> IO ()
 pipesPrint ns = runEffect $ each ns >-> toPipe myMealy' >-> printPipe
+
+-- test outputs
+main :: IO ()
+main = do
+  putStrLn ("bench fired up!" :: Text)
+  o :: Opts <- getRecord "a random bit of text"
+  let ns = fromMaybe 1000 (runs o)
+  let n = fromMaybe 1000 (sumTo o)
+  let t = ns * n
+  let str = replicate n 1
+  void $ runOutput
+    ("sfold-bench/bench/bench.lhs", LHS)
+    ("bench.md", GitHubMarkdown) $ do
+   (m, _) <- lift $ ticks ns mealy' [1 .. n]
+   (p, _) <- lift $ ticks ns pipe [1 .. n]
+   (ps, _) <- lift $ ticks ns pipe'' [1 .. n]
+   (pbs, _) <- lift $ ticks ns pipe' [1 .. n]
+   (fl, _) <- lift $ ticks ns foldl'' [1 .. n]
+   (psk, _) <- lift $ ticks ns skolem [1 .. n]
+   (jf,_) <- lift $ ticks ns foldz [1 .. n]
+   output "results" $ Native $ (:[]) $ formatRunsTime 0.38e-9 3
+      [ ("machines", m)
+      , ("pipes", p)
+      , ("pipe - state", ps)
+      , ("pipe - bad state", pbs)
+      , ("foldl", fl)
+      , ("pipe&skolem", psk)
+      , ("just a fold", jf)
+      ]
+
+```
+
+results
+
+| run              |   cputime|   cycles|
+|:-----------------|---------:|--------:|
+| machines         |  7.701e-5|  2.027e5|
+| pipes            |  5.009e-5|  1.318e5|
+| pipe - state     |  6.042e-5|  1.590e5|
+| pipe - bad state |  5.388e-2|  1.418e8|
+| foldl            |  1.668e-5|  4.388e4|
+| pipe&skolem      |  4.941e-5|  1.300e5|
+| just a fold      |  9.897e-6|  2.605e4|

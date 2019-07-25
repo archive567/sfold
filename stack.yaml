@@ -1,16 +1,29 @@
-resolver: nightly-2018-04-05
+resolver: lts-13.29
 
 packages:
   - sfold
   - sfold-bench
   - foldls
   - words
+  - ../perf/perf
+  - ../perf/perf-analysis
+  - ../perf/perf-criterion
+  - ../readme-lhs
 
 extra-deps:
-  - perf-0.4.0.1
+  # - perf-0.4.0.1
+  - rdtsc-1.3.0.1
   - tdigest-0.1
   - streaming-bytestring-0.1.6
   - streaming-utils-0.1.4.7
   - json-stream-0.4.2.3
+  - git: https://github.com/tonyday567/readme-lhs.git
+    commit: a48c5414051f9833b84ec5a20108a0b641b21a10
+  - git: https://github.com/tonyday567/perf.git
+    commit: cb0d0b77d3cdae3e1c0b5b07e3d7a13f144256ab
+    subdirs:
+      - perf
+      - perf-analysis
+      - perf-criterion
 
 allow-newer: true

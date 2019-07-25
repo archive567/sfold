@@ -1,35 +1,37 @@
 words
-===
+=====
 
-This is a test bed for word counting.  It currently includes:
+This is a test bed for word counting. It currently includes:
 
-- some literate programming style experiments.
-- optparse-generic style app design
-- using the [streaming](https://hackage.haskell.org/package/streaming-0.1.4.5/docs/Streaming.html) library.
+-   some literate programming style experiments.
+-   optparse-generic style app design
+-   using the
+    [streaming](https://hackage.haskell.org/package/streaming-0.1.4.5/docs/Streaming.html)
+    library.
 
-
-Next stage of development (if any) will be to look at remote computing and map-reduce haskell-style.
+Next stage of development (if any) will be to look at remote computing
+and map-reduce haskell-style.
 
 todo
----
+----
 
-- [ ] performance testing
-  See [this](https://www.reddit.com/r/haskell/comments/5x2g0r/streaming_package_vs_pipes_conduit_question_on/) reddit conversation
-- [ ] try out [Blast](https://github.com/jcmincke/Blast)
-
+-   \[ \] performance testing See
+    [this](https://www.reddit.com/r/haskell/comments/5x2g0r/streaming_package_vs_pipes_conduit_question_on/)
+    reddit conversation
+-   \[ \] try out [Blast](https://github.com/jcmincke/Blast)
 
 [ghc options](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/flags.html#flag-reference)
----
+--------------------------------------------------------------------------------------------------------
 
-\begin{code}
+``` {.haskell}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-\end{code}
+```
 
 [pragmas](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/lang.html)
----
+------------------------------------------------------------------------------------
 
-\begin{code}
+``` {.haskell}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
@@ -37,17 +39,17 @@ todo
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleInstances #-}
-\end{code}
+```
 
 [libraries](https://www.stackage.org/)
----
+--------------------------------------
 
-- [protolude](https://www.stackage.org/package/protolude)
-- [optparse-generic](https://www.stackage.org/package/optparse-generic)
-- [streaming](https://hackage.haskell.org/package/streaming-0.1.4.5/docs/Streaming.html)
-- [streaming-bytestring](http://hackage.haskell.org/package/streaming-bytestring)
+-   [protolude](https://www.stackage.org/package/protolude)
+-   [optparse-generic](https://www.stackage.org/package/optparse-generic)
+-   [streaming](https://hackage.haskell.org/package/streaming-0.1.4.5/docs/Streaming.html)
+-   [streaming-bytestring](http://hackage.haskell.org/package/streaming-bytestring)
 
-\begin{code}
+``` {.haskell}
 import Data.Default
 import Data.Text as Text
 import GHC.Base (String)
@@ -61,15 +63,14 @@ import qualified Data.ByteString.Streaming.HTTP as HTTP
 import qualified Data.Map as Map
 import qualified Streaming as S
 import qualified Streaming.Prelude as S
-
-\end{code}
+```
 
 code
----
+----
 
-- [hoogle](https://www.stackage.org/package/hoogle)
+-   [hoogle](https://www.stackage.org/package/hoogle)
 
-\begin{code}
+``` {.haskell}
 data Input = FileIn String | UrlIn String
     deriving (Read, Show, Generic)
 
@@ -161,28 +162,37 @@ main = do
         output "results" $ Native $ (:[]) $
           table mempty ["word", "count"] [AlignLeft, AlignRight] mempty
           ((\(t, c) -> [t, show c]) <$> ws)
-
-\end{code}
-
-output
-===
-
-```{.output .results}
 ```
 
+output
+======
+
+| word    |  count|
+|:--------|------:|
+| et      |    182|
+| in      |    113|
+| est     |     70|
+| se      |     65|
+| ad      |     64|
+| ut      |     57|
+| numquam |     50|
+| ne      |     45|
+| quod    |     44|
+| non     |     39|
+
 tests
----
+-----
 
-- [doctest](https://www.stackage.org/package/doctest)
+-   [doctest](https://www.stackage.org/package/doctest)
 
-\begin{code}
+``` {.haskell}
 -- | doctests
 -- >>> faves 10 <$> fromFile "other/fake.txt"
 -- [("et",182),("in",113),("est",70),("se",65),("ad",64),("ut",57),("numquam",50),("ne",45),("quod",44),("non",39)]
-\end{code}
+```
 
-***
+------------------------------------------------------------------------
 
-<div class="footer">
-Powered by [haskell](https://haskell-lang.org/), [stack](https://docs.haskellstack.org/en/stable/README/) and [pandoc](http://pandoc.org/).
-</div>
+Powered by [haskell](https://haskell-lang.org/),
+[stack](https://docs.haskellstack.org/en/stable/README/) and
+[pandoc](http://pandoc.org/).

@@ -20,15 +20,13 @@ category:
   Control
 build-type:
   Simple
-extra-source-files:
-  stack.yaml
 cabal-version:
-  >=1.18
+  2.0
 homepage:
   https://github.com/tonyday567/sfold
 executable sfold-bench
   main-is:
-    bench.hs
+    bench.lhs
   default-language:
     Haskell2010
   ghc-options:
@@ -40,6 +38,7 @@ executable sfold-bench
   build-depends:
     base >= 4 && < 5,
     criterion,
+    criterion-measurement,
     deepseq,
     foldl,
     formatting,
@@ -47,13 +46,16 @@ executable sfold-bench
     mtl,
     optparse-generic,
     perf,
+    perf-analysis,
+    perf-criterion,
     pipes,
     protolude,
     sfold,
     tdigest,
     text,
     transformers,
-    scientific
+    scientific,
+    readme-lhs
   default-extensions:
     DeriveGeneric,
     DeriveTraversable,
